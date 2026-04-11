@@ -271,6 +271,27 @@ class ProcessOutputs:
     def show_plots(self):
         plt.show()
 
+    #save raw output spectrum in dB (before optional post-filters)
+    def save_raw_db_csv(self):
+        r_out = self.r_out
+        Fs = self.Fs
+        Nt = self.Nt
+        data_dir = self.data_dir
+
+        if r_out is None:
+            raise RuntimeError('initial_process must be called before save_raw_db_csv')
+
+        Nfft = 2**iceil(log2(Nt))
+        fv = np.arange(np.int_(Nfft//2)+1)/Nfft*Fs
+        r_out_fft_dB = 20*log10(np.abs(rfft(r_out,Nfft,axis=-1))+np.spacing(1))
+
+        #CSV columns: frequency, then one dB column per receiver channel
+        out_data = np.column_stack((fv, r_out_fft_dB.T))
+        headers = ['freq_hz'] + [f'R{i+1}_dB' for i in range(r_out_fft_dB.shape[0])]
+        fname = Path(data_dir / Path('sim_outs_raw_spectrum_dB.csv'))
+        np.savetxt(fname, out_data, delimiter=',', header=','.join(headers), comments='')
+        self.print(f'saved raw dB spectrum CSV: {fname}')
+
     #save in WAV files, with native scaling and normalised across group of receivers
     def save_wav(self):
         #saves processed outputs
@@ -310,12 +331,14 @@ def main():
     parser.add_argument('--symmetric_lowpass',action='store_true',help='make symmetric FIR out of IIR (N_order even)')
     parser.add_argument('--air_abs_filter', type=str,help='stokes, modal, OLA, or none  ')
     parser.add_argument('--save_wav', action='store_true',help='save WAV files of processed outputs')
+    parser.add_argument('--save_db_raw', action='store_true',help='save raw receiver spectrum (dB) to CSV')
     parser.set_defaults(plot=False)
     parser.set_defaults(plot_raw=False)
     parser.set_defaults(data_dir=None)
     parser.set_defaults(resample_Fs=48e3)
     parser.set_defaults(air_abs_filter='none')
     parser.set_defaults(save_wav=False)
+    parser.set_defaults(save_db_raw=False)
     parser.set_defaults(N_order_lowpass=8)
     parser.set_defaults(N_order_lowcut=8)
     parser.set_defaults(fcut_lowcut=10.0)
@@ -327,6 +350,9 @@ def main():
     po = ProcessOutputs(args.data_dir)
 
     po.initial_process(fcut=args.fcut_lowcut,N_order=args.N_order_lowcut)
+
+    if args.save_db_raw:
+        po.save_raw_db_csv()
 
     if args.resample_Fs:
         po.resample(args.resample_Fs)
