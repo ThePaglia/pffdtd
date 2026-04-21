@@ -308,7 +308,7 @@ class ProcessOutputs:
                 fname = Path(data_dir / Path(f'R{i+1:03d}_out_native.wav')) #not scaled, direct sound amplitude ~1/4πR
                 wavwrite(fname,int(Fs_f),r_out_f[i]) 
 
-    #saw processed outputs in .h5 (with native scaling) 
+    #save processed outputs in .h5 (with native scaling) 
     def save_h5(self):
         #saves processed outputs
         self.print('saving H5 data..')
