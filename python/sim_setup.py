@@ -29,6 +29,7 @@ from air_abs.get_air_absorption import get_air_absorption
 def sim_setup(
                 #the following are required but using None default so not positional
                 insig_type=None, #sig type (see sig_comms.py)
+                insig_wav_file=None, #optional input WAV file when insig_type == 'wav'
                 fmax=None, #fmax for simulation (to set grid spacing)
                 PPW=None, #points per wavelength (also to set grid spacing)
                 save_folder=None, #where to save .h5 files
@@ -58,6 +59,8 @@ def sim_setup(
     assert rh is not None
     assert source_num > 0
     assert insig_type is not None
+    if insig_type == 'wav':
+        assert insig_wav_file is not None
     assert fmax is not None
     assert PPW is not None
     assert save_folder is not None
@@ -96,7 +99,7 @@ def sim_setup(
     sim_comms = SimComms(save_folder=save_folder) #reads from cart_grid
     sim_comms.prepare_source_pts(Sxyz)
     sim_comms.prepare_receiver_pts(Rxyz)
-    sim_comms.prepare_source_signals(duration,sig_type=insig_type)
+    sim_comms.prepare_source_signals(duration,sig_type=insig_type,wav_file=insig_wav_file)
     if diff_source:
         sim_comms.diff_source()
     sim_comms.save(compress=compress)

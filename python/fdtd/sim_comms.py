@@ -17,9 +17,9 @@ from numpy import array as npa
 from voxelizer.cart_grid import CartGrid
 from pathlib import Path
 from common.timerdict import TimerDict
-from common.myfuncs import iceil
+from common.myfuncs import iceil,wavread
 import h5py
-from scipy.signal import lfilter,bilinear_zpk
+from scipy.signal import lfilter,bilinear_zpk,resample
 from numpy import pi,cos,sin
 
 class SimComms: 
@@ -60,9 +60,10 @@ class SimComms:
         self.in_ixyz = in_ixyz
 
     #a few signals to choose from
-    def prepare_source_signals(self,duration,sig_type='impulse'):
+    def prepare_source_signals(self,duration,sig_type='impulse',wav_file=None):
         in_alpha = self.in_alpha
         Ts = self.Ts
+        Fs = 1.0/Ts
 
         Nt = np.int_(np.ceil(duration/Ts))
         in_sigs = np.zeros((in_alpha.size,Nt),dtype=np.float64)
@@ -86,6 +87,28 @@ class SimComms:
             N = iceil(5e-3/Ts)
             n = np.arange(N)
             in_sig[:N] = 0.5*(1.0-cos(2*pi*n/N))
+        elif sig_type=='wav':
+            if wav_file is None:
+                raise ValueError('wav_file must be provided when sig_type == "wav"')
+
+            wav_file = Path(wav_file)
+            wav_sr, wav_data = wavread(wav_file)
+            wav_data = np.asarray(wav_data, dtype=np.float64)
+
+            if wav_data.ndim == 1:
+                wav_sig = wav_data
+            else:
+                wav_sig = np.mean(wav_data, axis=0)
+
+            if wav_sr != Fs:
+                wav_sig = resample(wav_sig, int(np.round(wav_sig.size*Fs/wav_sr)))
+
+            if wav_sig.size >= Nt:
+                in_sig = wav_sig[:Nt]
+            else:
+                in_sig[:wav_sig.size] = wav_sig
+        else:
+            raise ValueError(f'unsupported source signal type: {sig_type}')
 
         in_sigs = in_alpha[:,None]*in_sig[None,:]
 
