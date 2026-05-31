@@ -19,7 +19,7 @@ sim_setup(
     mat_folder='../data/materials',
     source_num=1,
     insig_type='wav',
-    insig_wav_file='../FAH.wav',
+    insig_wav_file='../audio/3s96khz.wav',
     diff_source=True, #for single precision
     mat_files_dict={
                     'AcousticPanel': 'ctk_acoustic_panel.h5',
@@ -31,10 +31,10 @@ sim_setup(
                     'Tile': 'ctk_tile.h5',
                     'Walls': 'ctk_walls.h5',
                     }, #see build_mats.py to set these material impedances from absorption data
-    duration=3.0, #duration in seconds
+    duration=4.0, #duration in seconds
     Tc=20,
     rh=50,
-    fcc_flag=False,
+    fcc_flag=True,
     PPW=10.5, #for 1% phase velocity error at fmax
     fmax=1400.0,
     save_folder='../data/sim_data/ctk_cart/gpu', 
